@@ -3,11 +3,10 @@
 import io
 import uuid
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.project import Project
-from app.services.export_service import export_report
+from app.services.export_service import _to_pdf, export_report
 
 
 class TestExportReport:
@@ -34,6 +33,27 @@ class TestExportReport:
         assert len(content) > 0
         # PDF starts with %PDF
         assert content[:4] == b"%PDF"
+
+    async def test_export_summary_pdf(self, db: AsyncSession, sample_project: Project):
+        result = await export_report(db, sample_project.id, "summary", "pdf")
+        assert result is not None
+        content = result.read()
+        assert len(content) > 0
+        assert content[:4] == b"%PDF"
+
+    def test_to_pdf_with_long_cyrillic_text(self):
+        result = _to_pdf(
+            "Тестовый отчёт",
+            ["№", "Описание", "Статус"],
+            [[
+                1,
+                "Очень длинное описание ошибки на русском языке, которое должно корректно переноситься внутри ячейки PDF-таблицы и не ломать вёрстку документа. " * 3,
+                "Открыто",
+            ]],
+        )
+        content = result.read()
+        assert content[:4] == b"%PDF"
+        assert len(content) > 1500
 
     async def test_export_walls_xlsx(self, db: AsyncSession, sample_project: Project):
         result = await export_report(db, sample_project.id, "walls", "xlsx")

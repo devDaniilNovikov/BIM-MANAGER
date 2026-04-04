@@ -5,6 +5,8 @@ from __future__ import annotations
 import csv
 import io
 import uuid
+from pathlib import Path
+from xml.sax.saxutils import escape
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +27,9 @@ async def export_report(
 
     if data is None:
         return None
+
+    if fmt == "pdf" and "sections" in data:
+        return _sections_to_pdf(data.get("title", report_type), data["sections"])
 
     # Summary report has "sections" instead of flat columns/rows
     if "sections" in data:
@@ -113,54 +118,279 @@ def _to_csv(columns: list, rows: list) -> io.BytesIO:
 def _to_pdf(title: str, columns: list, rows: list) -> io.BytesIO:
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import mm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    font_name, font_bold = _register_pdf_fonts(pdfmetrics, TTFont)
 
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), topMargin=15 * mm, bottomMargin=15 * mm)
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=landscape(A4),
+        leftMargin=10 * mm,
+        rightMargin=10 * mm,
+        topMargin=15 * mm,
+        bottomMargin=15 * mm,
+    )
     styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "PdfTitle",
+        parent=styles["Title"],
+        fontName=font_bold,
+        fontSize=16,
+        leading=20,
+        spaceAfter=6 * mm,
+    )
+    header_style = ParagraphStyle(
+        "PdfHeader",
+        parent=styles["Normal"],
+        fontName=font_bold,
+        fontSize=9,
+        leading=11,
+        textColor=colors.white,
+        alignment=1,
+        wordWrap="CJK",
+    )
+    body_style = ParagraphStyle(
+        "PdfBody",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=8,
+        leading=10,
+        wordWrap="CJK",
+    )
+
     story = []
 
-    story.append(Paragraph(title, styles["Title"]))
-    story.append(Spacer(1, 10 * mm))
+    story.append(Paragraph(title, title_style))
 
     if not columns and not rows:
-        story.append(Paragraph("Нет данных", styles["Normal"]))
+        story.append(Paragraph("Нет данных", body_style))
         doc.build(story)
         buf.seek(0)
         return buf
 
-    table_data = []
-    if columns:
-        table_data.append(columns)
-    for row in rows:
-        table_data.append([str(v) if v is not None else "" for v in row])
-
-    if not table_data:
-        story.append(Paragraph("Нет данных", styles["Normal"]))
+    table = _build_pdf_table(
+        columns=columns,
+        rows=rows,
+        available_width=doc.width,
+        header_style=header_style,
+        body_style=body_style,
+        colors_module=colors,
+        long_table_cls=LongTable,
+        table_style_cls=TableStyle,
+    )
+    if table is None:
+        story.append(Paragraph("Нет данных", body_style))
         doc.build(story)
         buf.seek(0)
         return buf
 
-    t = Table(table_data, repeatRows=1)
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2E75B6")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 9),
-        ("FONTSIZE", (0, 1), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F0F4F8")]),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-    ]))
-    story.append(t)
+    story.append(table)
 
     doc.build(story)
     buf.seek(0)
     return buf
+
+
+def _sections_to_pdf(title: str, sections: list[dict]) -> io.BytesIO:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    font_name, font_bold = _register_pdf_fonts(pdfmetrics, TTFont)
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=landscape(A4),
+        leftMargin=10 * mm,
+        rightMargin=10 * mm,
+        topMargin=15 * mm,
+        bottomMargin=15 * mm,
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "PdfTitle",
+        parent=styles["Title"],
+        fontName=font_bold,
+        fontSize=16,
+        leading=20,
+        spaceAfter=6 * mm,
+    )
+    section_style = ParagraphStyle(
+        "PdfSection",
+        parent=styles["Heading2"],
+        fontName=font_bold,
+        fontSize=12,
+        leading=14,
+        spaceBefore=2 * mm,
+        spaceAfter=3 * mm,
+    )
+    header_style = ParagraphStyle(
+        "PdfHeader",
+        parent=styles["Normal"],
+        fontName=font_bold,
+        fontSize=9,
+        leading=11,
+        textColor=colors.white,
+        alignment=1,
+        wordWrap="CJK",
+    )
+    body_style = ParagraphStyle(
+        "PdfBody",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=8,
+        leading=10,
+        wordWrap="CJK",
+    )
+
+    story = [Paragraph(title, title_style)]
+
+    if not sections:
+        story.append(Paragraph("Нет данных", body_style))
+        doc.build(story)
+        buf.seek(0)
+        return buf
+
+    for idx, section in enumerate(sections):
+        story.append(Paragraph(section.get("title", "Раздел"), section_style))
+        table = _build_pdf_table(
+            columns=section.get("columns", []),
+            rows=section.get("rows", []),
+            available_width=doc.width,
+            header_style=header_style,
+            body_style=body_style,
+            colors_module=colors,
+            long_table_cls=LongTable,
+            table_style_cls=TableStyle,
+        )
+        if table is None:
+            story.append(Paragraph("Нет данных", body_style))
+        else:
+            story.append(table)
+        if idx < len(sections) - 1:
+            story.append(Spacer(1, 5 * mm))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf
+
+
+def _register_pdf_fonts(pdfmetrics, tt_font_cls) -> tuple[str, str]:
+    import reportlab
+
+    font_dir = Path(__file__).resolve().parent.parent / "fonts"
+    reportlab_font_dir = Path(reportlab.__file__).resolve().parent / "fonts"
+
+    candidates = [
+        (Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"), Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"), "SysDejaVuSans", "SysDejaVuSans-Bold"),
+        (Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"), Path("/System/Library/Fonts/Supplemental/Arial Bold.ttf"), "ArialUnicodeMS", "ArialUnicodeMS-Bold"),
+        (Path("/System/Library/Fonts/Supplemental/Arial.ttf"), Path("/System/Library/Fonts/Supplemental/Arial Bold.ttf"), "Arial", "Arial-Bold"),
+        (font_dir / "DejaVuSans.ttf", font_dir / "DejaVuSans-Bold.ttf", "DejaVuSans", "DejaVuSans-Bold"),
+        (reportlab_font_dir / "Vera.ttf", reportlab_font_dir / "VeraBd.ttf", "Vera", "VeraBd"),
+    ]
+
+    registered = set(pdfmetrics.getRegisteredFontNames())
+    for regular_path, bold_path, regular_name, bold_name in candidates:
+        if not regular_path.exists() or not bold_path.exists():
+            continue
+        try:
+            if regular_name not in registered:
+                pdfmetrics.registerFont(tt_font_cls(regular_name, str(regular_path)))
+            if bold_name not in registered:
+                pdfmetrics.registerFont(tt_font_cls(bold_name, str(bold_path)))
+            return regular_name, bold_name
+        except Exception:
+            continue
+
+    return "Helvetica", "Helvetica-Bold"
+
+
+def _build_pdf_table(
+    columns: list,
+    rows: list,
+    available_width: float,
+    header_style,
+    body_style,
+    colors_module,
+    long_table_cls,
+    table_style_cls,
+):
+    from reportlab.platypus import Paragraph
+
+    normalized_rows = [["" if value is None else str(value) for value in row] for row in rows if row]
+    if not columns and not normalized_rows:
+        return None
+
+    col_count = max(len(columns), max((len(row) for row in normalized_rows), default=0), 1)
+    normalized_columns = [str(value) for value in columns] + [""] * (col_count - len(columns))
+    padded_rows = [row + [""] * (col_count - len(row)) for row in normalized_rows]
+
+    col_widths = _compute_pdf_col_widths(normalized_columns, padded_rows, available_width)
+    table_data = []
+
+    if columns:
+        table_data.append([Paragraph(escape(value), header_style) for value in normalized_columns])
+
+    for row in padded_rows:
+        table_data.append([Paragraph(escape(value).replace("\n", "<br/>"), body_style) for value in row])
+
+    if not table_data:
+        return None
+
+    table = long_table_cls(table_data, colWidths=col_widths, repeatRows=1 if columns else 0)
+    style_commands = [
+        ("GRID", (0, 0), (-1, -1), 0.5, colors_module.grey),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+    ]
+    if columns:
+        style_commands.extend([
+            ("BACKGROUND", (0, 0), (-1, 0), colors_module.HexColor("#2E75B6")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors_module.white),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors_module.white, colors_module.HexColor("#F0F4F8")]),
+        ])
+    else:
+        style_commands.append(("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors_module.white, colors_module.HexColor("#F0F4F8")]))
+    table.setStyle(table_style_cls(style_commands))
+    return table
+
+
+def _compute_pdf_col_widths(columns: list[str], rows: list[list[str]], available_width: float) -> list[float]:
+    col_count = max(len(columns), max((len(row) for row in rows), default=0), 1)
+    if col_count == 1:
+        return [available_width]
+
+    samples = [columns, *rows[:50]]
+    weights = []
+    for idx in range(col_count):
+        values = [row[idx] for row in samples if idx < len(row)]
+        max_len = max((len(value) for value in values), default=8)
+        avg_len = sum(len(value) for value in values) / max(len(values), 1)
+        weights.append(max(1.0, min(max_len, 40)) + min(avg_len, 20))
+
+    total_weight = sum(weights) or col_count
+    min_width = min(available_width / col_count * 0.65, 55)
+    widths = [max(min_width, available_width * weight / total_weight) for weight in weights]
+    total_width = sum(widths)
+
+    if total_width > available_width:
+        scale = available_width / total_width
+        widths = [width * scale for width in widths]
+
+    return widths
 
 
 async def _build_issues_report(db: AsyncSession, project_id: uuid.UUID) -> dict | None:

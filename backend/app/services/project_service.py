@@ -13,35 +13,12 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.models.project import Building, Element, Issue, Project, Space, Storey
+from app.services.anomaly_detector import detect_anomalies
 from app.services.ifc_parser import ParsedModel, parse_ifc
 from app.services.quality_checker import check_all
 
 logger = logging.getLogger(__name__)
 
-
-async def create_project_record(
-    db: AsyncSession,
-    name: str,
-    description: str | None,
-    file_name: str,
-    file_content: bytes,
-) -> tuple[Project, Path]:
-    """Save file and create project record without parsing (for async flow)."""
-    safe_name = f"{uuid.uuid4().hex}_{file_name}"
-    file_path = settings.UPLOAD_DIR / safe_name
-    file_path.write_bytes(file_content)
-    file_size = len(file_content)
-
-    project = Project(
-        name=name,
-        description=description,
-        file_name=file_name,
-        file_path=str(file_path),
-        file_size=file_size,
-    )
-    db.add(project)
-    await db.flush()
-    return project, file_path
 
 
 async def create_project(
@@ -138,9 +115,12 @@ async def create_project(
 
     await db.flush()
 
-    # 6. Run quality checks and store issues
+    # 6. Run quality checks and anomaly detection, then store issues
     quality_issues = check_all(parsed.elements)
-    for qi in quality_issues:
+    anomaly_issues = detect_anomalies(parsed.elements)
+    all_issues = quality_issues + anomaly_issues
+
+    for qi in all_issues:
         elem = gid_to_element.get(qi.element_global_id)
         if elem:
             elem.is_problematic = True
@@ -157,7 +137,7 @@ async def create_project(
         db.add(issue)
 
     await db.flush()
-    logger.info(f"Project '{name}' created: {len(parsed.elements)} elements, {len(quality_issues)} issues")
+    logger.info(f"Project '{name}' created: {len(parsed.elements)} elements, {len(all_issues)} issues")
     return project
 
 

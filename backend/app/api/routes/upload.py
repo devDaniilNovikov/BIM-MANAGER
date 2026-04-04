@@ -1,4 +1,4 @@
-"""Upload IFC model endpoint + file download + async task status."""
+"""Upload IFC model endpoint and file download."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.models.project import Element, Issue, Project
 from app.schemas.project import ProjectOut
-from app.services.project_service import create_project, create_project_record
+from app.services.project_service import create_project
 
 router = APIRouter()
 
@@ -56,65 +56,6 @@ async def upload_model(
         element_count=el_count or 0,
         issue_count=iss_count or 0,
     )
-
-
-@router.post("/upload-async")
-async def upload_model_async(
-    file: UploadFile = File(...),
-    name: str = Form(...),
-    description: str | None = Form(None),
-    db: AsyncSession = Depends(get_db),
-):
-    """Upload IFC and parse asynchronously via Celery."""
-    if not file.filename or not file.filename.lower().endswith(".ifc"):
-        raise HTTPException(status_code=400, detail="Only .ifc files are allowed")
-
-    content = await file.read()
-    max_size = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if len(content) > max_size:
-        raise HTTPException(status_code=400, detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB} MB limit")
-
-    project, file_path = await create_project_record(
-        db=db,
-        name=name,
-        description=description,
-        file_name=file.filename,
-        file_content=content,
-    )
-    await db.commit()
-
-    from app.tasks.parse_ifc import parse_ifc_task
-    task = parse_ifc_task.delay(str(project.id), str(file_path))
-
-    return {
-        "project_id": str(project.id),
-        "task_id": task.id,
-        "status": "processing",
-    }
-
-
-@router.get("/task/{task_id}")
-async def get_task_status(task_id: str):
-    """Check Celery task status and progress."""
-    from app.tasks.celery_app import celery_app
-    result = celery_app.AsyncResult(task_id)
-
-    response = {
-        "task_id": task_id,
-        "status": result.state,
-    }
-
-    if result.state == "PARSING":
-        response["progress"] = result.info.get("progress", 0) if result.info else 0
-    elif result.state == "SUCCESS":
-        response["result"] = result.result
-        response["progress"] = 100
-    elif result.state == "FAILURE":
-        response["error"] = str(result.result)
-        response["progress"] = 0
-
-    return response
-
 
 @router.get("/{project_id}/file")
 async def download_file(project_id: uuid.UUID, db: AsyncSession = Depends(get_db)):

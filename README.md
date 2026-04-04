@@ -1,70 +1,105 @@
 # BIM Document Manager
 
-Система для управления BIM-документами (IFC файлами), анализа структуры, проверок качества (Quality Control) по кастомным правилам и поиска аномалий.
+Автоматизированная система управления проектной информацией на основе BIM/IFC моделей. Позволяет загружать IFC-файлы, просматривать 3D-модель, анализировать структуру здания, проводить проверки качества данных и экспортировать отчёты.
+
+## Стек технологий
+
+- **Backend:** FastAPI, SQLAlchemy 2.0 (async), PostgreSQL, ifcopenshell
+- **Frontend:** React, TypeScript, Vite, Material UI, Three.js, web-ifc, Recharts
+- **Инфраструктура:** Docker, Docker Compose, nginx
 
 ## Структура проекта
-- `backend/` — REST API на FastAPI, фоновые задачи Celery (обработка IFC), PostgreSQL, Redis.
-- `frontend/` — Пользовательский интерфейс на React (Vite, TypeScript).
 
-## Требования
-- **Docker** и **Docker Compose**
-- **Node.js** (для локального запуска фронтенда)
+```
+backend/     — REST API (FastAPI), парсинг IFC, проверки качества, экспорт отчётов
+frontend/    — SPA на React (Vite + TypeScript)
+```
 
-## Как запустить проект (через Docker)
+## Запуск через Docker Compose (рекомендуется)
 
-Вся серверная часть, база данных и брокер сообщений запакованы в `docker-compose.yml` и могут быть запущены одной командой.
-
-### 1. Запуск Backend-части (API, БД, Worker, Redis)
-Перейдите в папку `backend` и запустите контейнеры:
+Одна команда поднимает всё: базу данных, API-сервер и фронтенд.
 
 ```bash
-cd backend
 docker compose up -d --build
 ```
 
-**Что произойдет:**
-- Поднимется база данных **PostgreSQL** (порт `5432`)
-- Поднимется **Redis** для фоновых задач (порт `6379`)
-- Запустятся миграции базы данных (Alembic)
-- Поднимется основное **FastAPI** приложение (доступно на `http://localhost:8000`)
-- Поднимется фоновый воркер **Celery** для обработки IFC-файлов.
+После запуска:
+- **Фронтенд** — http://localhost:3000
+- **API** — http://localhost:8000
+- **Swagger (в режиме DEBUG)** — http://localhost:8000/api/docs
 
-
-
-### 2. Запуск Frontend-части
-Перейдите в папку `frontend`, установите зависимости и запустите локальный сервер разработки:
-
+Остановка:
 ```bash
-cd ../frontend
-npm install
-npm run dev
-```
-
-После этого фронтенд будет доступен по адресу, который выдаст консоль (обычно `http://localhost:5173`).
-
----
-
-## Полезные команды
-
-**Остановка всех контейнеров бэкенда:**
-```bash
-cd backend
 docker compose down
 ```
 
-**Просмотр логов API или Worker'а:**
-```bash
-docker logs backend-api-1 -f
-docker logs backend-worker-1 -f
+## Локальный запуск (для разработки)
+
+### 1. База данных
+
+Запустите PostgreSQL (через Docker или локально). Создайте базу:
+
+```sql
+CREATE USER bim WITH PASSWORD 'bimpass';
+CREATE DATABASE bim_system OWNER bim;
 ```
 
-**Запуск тестов:**
-Для запуска локальных тестов бэкенда:
+### 2. Backend
+
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-pytest
 ```
 
+Создайте файл `.env` в папке `backend/`:
+```
+DATABASE_URL=postgresql+asyncpg://bim:bimpass@localhost:5432/bim_system
+DEBUG=true
+```
+
+Запуск:
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Таблицы создаются автоматически при старте приложения.
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Фронтенд будет доступен на http://localhost:5173. API-запросы проксируются на `http://localhost:8000`.
+
+## Основные модули
+
+| Модуль | Описание |
+|--------|----------|
+| Загрузка IFC | Загрузка и валидация IFC-файлов |
+| 3D-просмотр | Визуализация модели (Three.js + web-ifc) |
+| Пространственная структура | Дерево: здание > этаж > помещение |
+| Элементы | Таблица элементов с фильтрацией и поиском |
+| Замечания | Создание, редактирование, фильтрация замечаний |
+| Контроль качества | Встроенные + пользовательские правила проверки |
+| Аналитика | Дашборд со статистикой, графиками, полнотой данных |
+| Экспорт | Отчёты в форматах XLSX, CSV, PDF |
+
+## Полезные команды
+
+Просмотр логов:
+```bash
+docker compose logs backend -f
+docker compose logs frontend -f
+```
+
+Запуск тестов:
+```bash
+cd backend
+source .venv/bin/activate
+pytest
+```

@@ -22,6 +22,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/bim_docs
+      - PYTHONPATH=/app
     volumes:
       - ./uploads:/app/uploads
       - ./exports:/app/exports
@@ -29,7 +30,7 @@ services:
       db:
         condition: service_healthy
     command: >
-      sh -c "alembic upgrade head &&
+      sh -c "python -m alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 

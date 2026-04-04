@@ -23,6 +23,9 @@ class QualityIssue:
     recommendation: str | None = None
 
 
+# Allowed element attributes for user-controlled getattr access
+ALLOWED_ATTRIBUTES = {"length", "width", "height", "area", "volume", "weight"}
+
 # Elements that must have quantities
 REQUIRES_QUANTITIES = {
     "IfcWall", "IfcWallStandardCase", "IfcSlab", "IfcColumn", "IfcBeam",
@@ -190,6 +193,8 @@ def _apply_custom_rule(
 
     elif check_type == "value_range":
         attr = config.get("attribute", "area")
+        if attr not in ALLOWED_ATTRIBUTES:
+            return None
         min_val = config.get("min")
         max_val = config.get("max")
         val = getattr(el, attr, None)
@@ -207,6 +212,8 @@ def _apply_custom_rule(
 
     elif check_type == "has_quantity":
         qty = config.get("quantity", "area")
+        if qty not in ALLOWED_ATTRIBUTES:
+            return None
         val = getattr(el, qty, None)
         if val is None:
             return QualityIssue(

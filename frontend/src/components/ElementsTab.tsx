@@ -224,16 +224,20 @@ export default function ElementsTab({ projectId }: Props) {
                 </>
               )}
 
-              {detail.properties_json && (
-                <>
-                  <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Наборы свойств</Typography>
-                  <Box sx={{ maxHeight: 300, overflow: 'auto', bgcolor: 'grey.50', p: 2, borderRadius: 1, fontSize: 13 }}>
-                    <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                      {JSON.stringify(JSON.parse(detail.properties_json), null, 2)}
-                    </pre>
-                  </Box>
-                </>
-              )}
+              {detail.properties_json && (() => {
+                let parsed;
+                try { parsed = JSON.parse(detail.properties_json); } catch { parsed = null; }
+                return parsed ? (
+                  <>
+                    <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Наборы свойств</Typography>
+                    <Box sx={{ maxHeight: 300, overflow: 'auto', bgcolor: 'grey.50', p: 2, borderRadius: 1, fontSize: 13 }}>
+                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                        {JSON.stringify(parsed, null, 2)}
+                      </pre>
+                    </Box>
+                  </>
+                ) : null;
+              })()}
             </DialogContent>
           </>
         )}

@@ -31,3 +31,8 @@ pgdata/
 
 # Claude
 .claude/
+
+# Temp files
+.last_commit_short.txt
+.push_*.txt
+.retry_*.txt

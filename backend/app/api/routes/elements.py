@@ -20,9 +20,9 @@ router = APIRouter()
 @router.get("/{project_id}/elements")
 async def list_elements(
     project_id: uuid.UUID,
-    ifc_class: str | None = None,
-    storey_name: str | None = None,
-    search: str | None = None,
+    ifc_class: str | None = Query(None, max_length=100),
+    storey_name: str | None = Query(None, max_length=200),
+    search: str | None = Query(None, max_length=200),
     has_issues: bool | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),

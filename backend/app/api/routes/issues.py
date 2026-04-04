@@ -20,10 +20,10 @@ router = APIRouter()
 @router.get("/{project_id}/issues")
 async def list_issues(
     project_id: uuid.UUID,
-    status: str | None = None,
-    severity: str | None = None,
-    category: str | None = None,
-    issue_type: str | None = None,
+    status: str | None = Query(None, max_length=50),
+    severity: str | None = Query(None, max_length=50),
+    category: str | None = Query(None, max_length=100),
+    issue_type: str | None = Query(None, max_length=100),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),

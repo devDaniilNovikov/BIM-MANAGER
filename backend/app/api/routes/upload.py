@@ -34,6 +34,9 @@ async def upload_model(
     if len(content) > max_size:
         raise HTTPException(status_code=400, detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB} MB limit")
 
+    if not content[:20].decode("ascii", errors="ignore").startswith("ISO-10303-21"):
+        raise HTTPException(status_code=400, detail="Invalid IFC file content")
+
     project = await create_project(
         db=db,
         name=name,
@@ -64,7 +67,10 @@ async def download_file(project_id: uuid.UUID, db: AsyncSession = Depends(get_db
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    file_path = Path(project.file_path)
+    file_path = Path(project.file_path).resolve()
+    upload_dir = settings.UPLOAD_DIR.resolve()
+    if not str(file_path).startswith(str(upload_dir)):
+        raise HTTPException(status_code=403, detail="Access denied")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found on disk")
 

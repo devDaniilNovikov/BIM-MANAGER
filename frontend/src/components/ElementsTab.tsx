@@ -9,7 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getElements, getElement, getElementClasses } from '../api/elements';
 import type { Element, ElementDetail } from '../types';
-import { SEVERITY_RU, STATUS_RU, translateIfcClass, t } from '../utils/translations';
+import { SEVERITY_RU, STATUS_RU, translateIfcClass, translateMessage, t } from '../utils/translations';
 
 interface Props {
   projectId: string;
@@ -216,7 +216,7 @@ export default function ElementsTab({ projectId }: Props) {
                         <Chip label={t(SEVERITY_RU, iss.severity)} size="small" color={iss.severity === 'error' ? 'error' : iss.severity === 'warning' ? 'warning' : 'info'} />
                         <Chip label={t(STATUS_RU, iss.status)} size="small" variant="outlined" />
                       </Box>
-                      <Typography variant="body2">{iss.message}</Typography>
+                      <Typography variant="body2">{translateMessage(iss.message)}</Typography>
                       {iss.recommendation && (
                         <Typography variant="body2" color="primary" sx={{ mt: 0.5 }}>{iss.recommendation}</Typography>
                       )}

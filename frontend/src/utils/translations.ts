@@ -65,3 +65,65 @@ export const translateIfcClass = (cls: string): string => {
 
 export const t = <T extends Record<string, string>>(map: T, key: string): string =>
   map[key] ?? key;
+
+// Translates English backend messages to Russian using regex patterns
+export const translateMessage = (msg: string): string => {
+  if (!msg) return msg;
+
+  return msg
+    // "Element IfcWall (guid) has no name."
+    .replace(
+      /Element (\S+) \(([^)]+)\) has no name\./,
+      'Элемент $1 ($2) не имеет наименования.'
+    )
+    // "Element 'Name' has no type definition."
+    .replace(
+      /Element '([^']+)' has no type definition\./,
+      "Элемент '$1' не имеет определения типа."
+    )
+    // "Element 'Name' (IfcClass) is not assigned to any storey."
+    .replace(
+      /Element '([^']+)' \(([^)]+)\) is not assigned to any storey\./,
+      "Элемент '$1' ($2) не привязан ни к одному этажу."
+    )
+    // "Element 'Name' is not assigned to a storey."
+    .replace(
+      /Element '([^']+)' is not assigned to a storey\./,
+      "Элемент '$1' не привязан ни к одному этажу."
+    )
+    // "Element 'Name' (IfcClass) has no material assigned."
+    .replace(
+      /Element '([^']+)' \(([^)]+)\) has no material assigned\./,
+      "Элемент '$1' ($2) не имеет назначенного материала."
+    )
+    // "Element 'Name' (IfcClass) has no quantity data."
+    .replace(
+      /Element '([^']+)' \(([^)]+)\) has no quantity data\./,
+      "Элемент '$1' ($2) не имеет данных о количествах."
+    )
+    // "Element 'Name' has suspiciously small area: 0.001."
+    .replace(
+      /Element '([^']+)' has suspiciously small area: ([^.]+)\./,
+      "Элемент '$1' имеет подозрительно малую площадь: $2."
+    )
+    // "Element 'Name' has negative volume: -1.5."
+    .replace(
+      /Element '([^']+)' has negative volume: ([^.]+)\./,
+      "Элемент '$1' имеет отрицательный объём: $2."
+    )
+    // "Element 'Name' missing property Pset.PropName."
+    .replace(
+      /Element '([^']+)' missing property ([^.]+\.[^.]+)\./,
+      "Элемент '$1' не имеет свойства $2."
+    )
+    // "Element 'Name' has no {qty} quantity."
+    .replace(
+      /Element '([^']+)' has no (\S+) quantity\./,
+      "Элемент '$1' не имеет количества «$2»."
+    )
+    // "Element 'Name' attr=val outside range [min, max]."
+    .replace(
+      /Element '([^']+)' (\S+=\S+) outside range \[([^\]]+)\]\./,
+      "Элемент '$1': значение $2 выходит за допустимый диапазон [$3]."
+    );
+};

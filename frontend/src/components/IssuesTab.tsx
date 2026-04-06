@@ -9,7 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getIssues, createIssue, updateIssue, deleteIssue } from '../api/issues';
 import type { Issue, IssueCreate } from '../types';
-import { SEVERITY_RU, CATEGORY_RU, STATUS_RU, t } from '../utils/translations';
+import { SEVERITY_RU, CATEGORY_RU, STATUS_RU, t, translateMessage } from '../utils/translations';
 
 interface Props { projectId: string; }
 
@@ -105,7 +105,7 @@ export default function IssuesTab({ projectId }: Props) {
               <TableRow key={iss.id}>
                 <TableCell><Chip label={t(SEVERITY_RU, iss.severity)} size="small" color={severityColor(iss.severity)} /></TableCell>
                 <TableCell><Typography variant="body2">{t(CATEGORY_RU, iss.category)}</Typography></TableCell>
-                <TableCell sx={{ maxWidth: 300 }}><Typography variant="body2" noWrap>{iss.message}</Typography></TableCell>
+                <TableCell sx={{ maxWidth: 300 }}><Typography variant="body2" noWrap>{translateMessage(iss.message)}</Typography></TableCell>
                 <TableCell sx={{ maxWidth: 250 }}>
                   <Typography variant="body2" color="primary" noWrap>{iss.recommendation || '—'}</Typography>
                 </TableCell>

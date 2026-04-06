@@ -9,6 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getIssues, createIssue, updateIssue, deleteIssue } from '../api/issues';
 import type { Issue, IssueCreate } from '../types';
+import { SEVERITY_RU, CATEGORY_RU, STATUS_RU, t } from '../utils/translations';
 
 interface Props { projectId: string; }
 
@@ -102,8 +103,8 @@ export default function IssuesTab({ projectId }: Props) {
           <TableBody>
             {items.map(iss => (
               <TableRow key={iss.id}>
-                <TableCell><Chip label={iss.severity} size="small" color={severityColor(iss.severity)} /></TableCell>
-                <TableCell><Typography variant="body2">{iss.category}</Typography></TableCell>
+                <TableCell><Chip label={t(SEVERITY_RU, iss.severity)} size="small" color={severityColor(iss.severity)} /></TableCell>
+                <TableCell><Typography variant="body2">{t(CATEGORY_RU, iss.category)}</Typography></TableCell>
                 <TableCell sx={{ maxWidth: 300 }}><Typography variant="body2" noWrap>{iss.message}</Typography></TableCell>
                 <TableCell sx={{ maxWidth: 250 }}>
                   <Typography variant="body2" color="primary" noWrap>{iss.recommendation || '—'}</Typography>
@@ -114,10 +115,10 @@ export default function IssuesTab({ projectId }: Props) {
                     onChange={e => handleStatusChange(iss, e.target.value)}
                     sx={{ minWidth: 130 }}
                   >
-                    <MenuItem value="open">Открыто</MenuItem>
-                    <MenuItem value="in_progress">В работе</MenuItem>
-                    <MenuItem value="resolved">Решено</MenuItem>
-                    <MenuItem value="ignored">Игнор</MenuItem>
+                    <MenuItem value="open">{t(STATUS_RU, 'open')}</MenuItem>
+                    <MenuItem value="in_progress">{t(STATUS_RU, 'in_progress')}</MenuItem>
+                    <MenuItem value="resolved">{t(STATUS_RU, 'resolved')}</MenuItem>
+                    <MenuItem value="ignored">{t(STATUS_RU, 'ignored')}</MenuItem>
                   </TextField>
                 </TableCell>
                 <TableCell>

@@ -8,45 +8,9 @@ import {
 } from 'recharts';
 import { getOverview, getByClass, getByStorey, getCompleteness, getIssuesSummary } from '../api/analytics';
 import type { AnalyticsOverview, ClassStats, StoreyStats, Completeness, IssuesSummary } from '../types';
+import { SEVERITY_RU, translateIfcClass, t } from '../utils/translations';
 
 const COLORS = ['#1565c0', '#f57c00', '#2e7d32', '#c62828', '#6a1b9a', '#00838f', '#4e342e', '#546e7a'];
-
-const CLASS_TRANSLATIONS: Record<string, string> = {
-  'Wall': 'Стена',
-  'WallStandardCase': 'Стена (ст)',
-  'Door': 'Дверь',
-  'Window': 'Окно',
-  'Slab': 'Перекрытие',
-  'Column': 'Колонна',
-  'Beam': 'Балка',
-  'Stair': 'Лестница',
-  'StairFlight': 'Лестничный марш',
-  'Roof': 'Крыша',
-  'Space': 'Помещение',
-  'BuildingElementProxy': 'Сборный элемент',
-  'Railing': 'Ограждение',
-  'Covering': 'Покрытие',
-  'CurtainWall': 'Навесная стена',
-  'Furniture': 'Мебель',
-  'Member': 'Элемент каркаса',
-  'Plate': 'Пластина',
-  'FlowTerminal': 'Оборудование',
-  'FlowSegment': 'Труба/Воздуховод',
-  'FlowFitting': 'Фитинг',
-  'PipeSegment': 'Труба',
-  'PipeFitting': 'Фитинг трубы',
-  'DuctSegment': 'Воздуховод',
-  'DuctFitting': 'Фитинг возд.',
-  'Site': 'Участок',
-  'Building': 'Здание',
-  'BuildingStorey': 'Этаж',
-  'OpeningElement': 'Проём'
-};
-
-function translateIfcClass(className: string): string {
-  const stripped = className.replace('Ifc', '');
-  return CLASS_TRANSLATIONS[stripped] || stripped;
-}
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -117,7 +81,7 @@ export default function AnalyticsTab({ projectId }: { projectId: string }) {
     // будут в начале массива и отрисуются в самом верху графика
     .sort((a, b) => extractStoreyNumber(b.rawName) - extractStoreyNumber(a.rawName));
 
-  const issuesBySeverity = issuesSummary ? Object.entries(issuesSummary.by_severity).map(([name, value]) => ({ name, value })) : [];
+  const issuesBySeverity = issuesSummary ? Object.entries(issuesSummary.by_severity).map(([key, value]) => ({ name: t(SEVERITY_RU, key), value })) : [];
 
   return (
     <Box>

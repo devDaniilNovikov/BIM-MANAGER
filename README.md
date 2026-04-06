@@ -19,6 +19,15 @@ frontend/    — SPA на React (Vite + TypeScript)
 
 Одна команда поднимает всё: базу данных, API-сервер и фронтенд.
 
+### 1. Клонировать репозиторий
+
+```bash
+git clone <url-репозитория>
+cd PyCharmMiscProject
+```
+
+### 2. Запустить контейнеры
+
 ```bash
 docker compose up -d --build
 ```

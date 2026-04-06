@@ -9,6 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getElements, getElement, getElementClasses } from '../api/elements';
 import type { Element, ElementDetail } from '../types';
+import { SEVERITY_RU, STATUS_RU, translateIfcClass, t } from '../utils/translations';
 
 interface Props {
   projectId: string;
@@ -73,7 +74,7 @@ export default function ElementsTab({ projectId }: Props) {
         >
           <MenuItem value="">Все классы</MenuItem>
           {classes.map(c => (
-            <MenuItem key={c.ifc_class} value={c.ifc_class}>{c.ifc_class} ({c.count})</MenuItem>
+            <MenuItem key={c.ifc_class} value={c.ifc_class}>{translateIfcClass(c.ifc_class)} ({c.count})</MenuItem>
           ))}
         </TextField>
         <TextField
@@ -114,7 +115,7 @@ export default function ElementsTab({ projectId }: Props) {
                 sx={{ cursor: 'pointer', bgcolor: el.is_problematic ? 'rgba(255,152,0,0.05)' : undefined }}
                 onClick={() => openDetail(el)}
               >
-                <TableCell><Chip label={el.ifc_class.replace('Ifc', '')} size="small" /></TableCell>
+                <TableCell><Chip label={translateIfcClass(el.ifc_class)} size="small" /></TableCell>
                 <TableCell>{el.name || '—'}</TableCell>
                 <TableCell>{el.type_name || '—'}</TableCell>
                 <TableCell>{el.storey_name || '—'}</TableCell>
@@ -153,7 +154,7 @@ export default function ElementsTab({ projectId }: Props) {
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">Класс IFC</Typography>
-                  <Typography>{detail.ifc_class}</Typography>
+                  <Typography>{translateIfcClass(detail.ifc_class)}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">Тип</Typography>
@@ -212,8 +213,8 @@ export default function ElementsTab({ projectId }: Props) {
                   {detail.issues.map(iss => (
                     <Box key={iss.id} sx={{ p: 1, mb: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                       <Box sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
-                        <Chip label={iss.severity} size="small" color={iss.severity === 'error' ? 'error' : iss.severity === 'warning' ? 'warning' : 'info'} />
-                        <Chip label={iss.status} size="small" variant="outlined" />
+                        <Chip label={t(SEVERITY_RU, iss.severity)} size="small" color={iss.severity === 'error' ? 'error' : iss.severity === 'warning' ? 'warning' : 'info'} />
+                        <Chip label={t(STATUS_RU, iss.status)} size="small" variant="outlined" />
                       </Box>
                       <Typography variant="body2">{iss.message}</Typography>
                       {iss.recommendation && (

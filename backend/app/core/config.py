@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/bim_docs"
+    DATABASE_URL: str = "postgresql+asyncpg://danilanovikov@localhost:5432/bim_docs"
 
     # File storage
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent

@@ -10,6 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { runQC, getRules, createRule, updateRule, deleteRule } from '../api/quality';
 import type { QCRule, QCRunResult } from '../types';
+import { SEVERITY_RU, CHECK_TYPE_RU, translateIfcClass, t } from '../utils/translations';
 
 interface Props { projectId: string; }
 
@@ -110,10 +111,10 @@ export default function QualityTab({ projectId }: Props) {
                   </TableCell>
                   <TableCell>{r.name}</TableCell>
                   <TableCell sx={{ maxWidth: 200 }}><Typography variant="body2" noWrap>{r.description || '—'}</Typography></TableCell>
-                  <TableCell><Chip label={r.ifc_class} size="small" /></TableCell>
-                  <TableCell><Chip label={r.check_type} size="small" variant="outlined" /></TableCell>
+                  <TableCell><Chip label={r.ifc_class === '*' ? 'Все' : translateIfcClass(r.ifc_class)} size="small" /></TableCell>
+                  <TableCell><Chip label={t(CHECK_TYPE_RU, r.check_type)} size="small" variant="outlined" /></TableCell>
                   <TableCell>
-                    <Chip label={r.severity} size="small" color={r.severity === 'error' ? 'error' : r.severity === 'warning' ? 'warning' : 'info'} />
+                    <Chip label={t(SEVERITY_RU, r.severity)} size="small" color={r.severity === 'error' ? 'error' : r.severity === 'warning' ? 'warning' : 'info'} />
                   </TableCell>
                   <TableCell>
                     <IconButton size="small" color="error" onClick={() => handleDeleteRule(r.id)}><DeleteIcon fontSize="small" /></IconButton>

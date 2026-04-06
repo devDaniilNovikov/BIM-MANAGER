@@ -22,7 +22,7 @@ frontend/    — SPA на React (Vite + TypeScript)
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone <url-репозитория>
+git clone https://github.com/johnbullfdv24/bim-manager
 cd PyCharmMiscProject
 ```
 

@@ -42,6 +42,107 @@ docker compose up -d --build
 docker compose down
 ```
 
+## Запуск через IDE на Windows
+
+Удобный способ: запустить backend и frontend прямо из редактора, без ручных команд в терминале. Браузер открывается по фиксированным URL.
+
+### Вариант А — VS Code (бесплатно, рекомендуется)
+
+**Необходимые расширения** (установить через `Ctrl+Shift+X`):
+- `Python` (Microsoft)
+- `Pylance`
+- `ESLint`
+
+**Подготовка** (выполняется один раз в терминале VS Code — `Ctrl+`` `):
+```powershell
+# Backend
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+# Создайте backend\.env с содержимым:
+# DATABASE_URL=postgresql+asyncpg://bim:bimpass@localhost:5432/bim_system
+# DEBUG=true
+
+# Frontend
+cd ..\frontend
+npm install
+```
+
+**Запуск backend (с дебаггером):**
+
+1. Откройте проект в VS Code: `File → Open Folder → папка BIM-MANAGER`
+2. Нажмите `F5` или перейдите в панель **Run and Debug** (`Ctrl+Shift+D`)
+3. В выпадающем списке выберите **`Backend: FastAPI (uvicorn)`** → нажмите ▶
+
+Backend стартует, в панели **Debug Console** появятся логи.
+Доступен по адресу: **http://localhost:8000**
+
+> Файл конфигурации уже готов: `.vscode/launch.json`
+
+**Запуск frontend:**
+
+1. Откройте новый терминал: `Terminal → New Terminal` (`Ctrl+Shift+`` `)
+2. Выполните:
+```powershell
+cd frontend
+npm run dev
+```
+
+Или через меню: `Terminal → Run Task → Frontend: npm dev`
+
+Frontend доступен по адресу: **http://localhost:5173**
+
+---
+
+### Вариант Б — PyCharm Professional
+
+**Настройка интерпретатора:**
+
+1. `File → Settings → Project → Python Interpreter`
+2. Нажмите шестерёнку → `Add Interpreter → Add Local Interpreter`
+3. Выберите `Existing` → укажите путь `backend\.venv\Scripts\python.exe`
+
+**Run-конфигурация для backend:**
+
+1. В правом верхнем углу нажмите `Edit Configurations...` (или `Run → Edit Configurations`)
+2. Нажмите `+` → выберите **`FastAPI`** (или **`Python`**)
+3. Заполните поля:
+
+| Поле | Значение |
+|---|---|
+| Name | `Backend: FastAPI` |
+| Script / Module | `uvicorn` |
+| Parameters | `app.main:app --host 0.0.0.0 --port 8000 --reload` |
+| Working directory | `C:\...\BIM-MANAGER\backend` |
+| EnvFile | `backend\.env` |
+
+4. Нажмите **OK**, затем ▶ (или `Shift+F10`)
+
+**Запуск frontend в PyCharm:**
+
+1. Откройте терминал внутри PyCharm: `View → Tool Windows → Terminal`
+2. Выполните:
+```powershell
+cd frontend
+npm run dev
+```
+
+---
+
+### URL после запуска
+
+| Сервис | Адрес |
+|---|---|
+| Фронтенд (React) | http://localhost:5173 |
+| Backend API | http://localhost:8000 |
+| Swagger UI (документация API) | http://localhost:8000/api/docs |
+| Health check | http://localhost:8000/api/health |
+
+> Swagger доступен только при `DEBUG=true` в файле `.env`
+
+---
+
 ## Локальный запуск (для разработки)
 
 ### 1. База данных

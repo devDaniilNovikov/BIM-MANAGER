@@ -6,7 +6,6 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import FolderIcon from '@mui/icons-material/Folder';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 
 const DRAWER_WIDTH = 260;

@@ -31,6 +31,17 @@ pgdata/
 
 # Claude
 .claude/
+.claude-flow/
+.agents/
+.codex/
+.mcp.json
+
+# Local Python environments
+backend/venv312/
+
+# Generated document review artifacts
+docs/render_*/
+docs/runtime_screenshots/*.db
 
 # Temp files
 .last_commit_short.txt

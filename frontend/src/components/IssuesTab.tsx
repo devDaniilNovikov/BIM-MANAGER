@@ -14,7 +14,6 @@ import { SEVERITY_RU, CATEGORY_RU, STATUS_RU, t, translateMessage } from '../uti
 interface Props { projectId: string; }
 
 const severityColor = (s: string) => s === 'error' ? 'error' : s === 'warning' ? 'warning' : 'info';
-const statusColor = (s: string) => s === 'resolved' ? 'success' : s === 'ignored' ? 'default' : s === 'in_progress' ? 'primary' : 'warning';
 
 export default function IssuesTab({ projectId }: Props) {
   const [items, setItems] = useState<Issue[]>([]);

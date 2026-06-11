@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Box, Button, Card, CardContent, Grid, Typography, MenuItem,
-  TextField, Stack, Divider,
+  TextField, Divider,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DescriptionIcon from '@mui/icons-material/Description';

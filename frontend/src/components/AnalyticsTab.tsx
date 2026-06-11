@@ -10,8 +10,6 @@ import { getOverview, getByClass, getByStorey, getCompleteness, getIssuesSummary
 import type { AnalyticsOverview, ClassStats, StoreyStats, Completeness, IssuesSummary } from '../types';
 import { SEVERITY_RU, translateIfcClass, t } from '../utils/translations';
 
-const COLORS = ['#1565c0', '#f57c00', '#2e7d32', '#c62828', '#6a1b9a', '#00838f', '#4e342e', '#546e7a'];
-
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <Card>
